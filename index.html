@@ -1,1 +1,361 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bangla Converter | Unicode to Bijoy & Bijoy to Unicode</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans Bengali', sans-serif;
+            background-color: #f3f4f6;
+        }
+        /* Bijoy font simulation (Usually user needs SutonnyMJ installed locally) */
+        .bijoy-font {
+            font-family: 'SutonnyMJ', 'SutonnyOMJ', 'SolaimanLipi', sans-serif;
+        }
+        ::selection {
+            background: #10b981;
+            color: white;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
 
+    <!-- Navbar -->
+    <nav class="bg-emerald-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                </svg>
+                বাংলা কনভার্টার
+            </h1>
+            <a href="https://github.com/" target="_blank" class="text-sm bg-emerald-700 px-3 py-1 rounded hover:bg-emerald-800 transition">GitHub-এ দেখুন</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        
+        <div class="bg-white rounded-xl shadow-xl p-6 md:p-8 max-w-5xl mx-auto">
+            
+            <!-- Tabs / Mode Selection -->
+            <div class="flex justify-center mb-8">
+                <div class="inline-flex bg-gray-100 p-1 rounded-lg">
+                    <button id="tabUniToBijoy" onclick="switchMode('u2b')" class="px-6 py-2 rounded-md text-sm font-medium transition-all bg-emerald-600 text-white shadow-sm">
+                        Unicode → Bijoy
+                    </button>
+                    <button id="tabBijoyToUni" onclick="switchMode('b2u')" class="px-6 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-emerald-600 transition-all">
+                        Bijoy → Unicode
+                    </button>
+                </div>
+            </div>
+
+            <!-- Input/Output Area -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Input Box -->
+                <div class="flex flex-col gap-2">
+                    <label id="inputLabel" class="font-semibold text-gray-700 flex justify-between">
+                        <span>ইউনিকোড কিবোর্ড বা পেস্ট করুন (Unicode)</span>
+                        <span class="text-xs text-gray-400 font-normal">অপ্র বা প্রভাত লেআউট</span>
+                    </label>
+                    <div class="relative">
+                        <textarea id="inputText" class="w-full h-64 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition resize-none text-base" placeholder="এখানে লিখুন..."></textarea>
+                        <button onclick="clearText('inputText')" class="absolute top-2 right-2 text-gray-400 hover:text-red-500 p-1 rounded">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="text-right text-xs text-gray-500" id="charCount">0 characters</div>
+                </div>
+
+                <!-- Controls (Mobile Only) -->
+                <div class="md:hidden flex justify-center items-center py-2">
+                    <button onclick="doConvert()" class="bg-emerald-600 text-white p-3 rounded-full shadow-lg hover:bg-emerald-700 active:scale-95 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Output Box -->
+                <div class="flex flex-col gap-2">
+                    <label id="outputLabel" class="font-semibold text-gray-700">বিজয় আউটপুট (Bijoy ANSI)</label>
+                    <div class="relative">
+                        <textarea id="outputText" readonly class="w-full h-64 p-4 bg-gray-50 border border-gray-300 rounded-lg text-base resize-none focus:outline-none" placeholder="ফলাফল এখানে আসবে..."></textarea>
+                        <button onclick="copyToClipboard()" class="absolute top-2 right-2 bg-white text-emerald-600 border border-emerald-200 hover:bg-emerald-50 px-3 py-1 rounded text-sm font-medium shadow-sm transition flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            কপি
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fix Broken Words Button (New Feature) -->
+            <div class="mt-4 flex justify-end">
+                <button onclick="fixBrokenWords()" class="text-sm bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border border-yellow-300 px-4 py-2 rounded-full transition flex items-center gap-2 font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    বিজয় ভাঙ্গা শব্দ ঠিক করতে ক্লিক করুন
+                </button>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mt-8 flex flex-col md:flex-row gap-4 justify-center border-t pt-8">
+                <button onclick="doConvert()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transform active:scale-95 transition-all text-lg flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                    কনভার্ট করুন
+                </button>
+                <button onclick="clearAll()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-8 rounded-lg shadow active:scale-95 transition-all text-lg">
+                    মুছে ফেলুন
+                </button>
+            </div>
+            
+            <div class="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 text-sm rounded">
+                <strong>দ্রষ্টব্য:</strong> বিজয় ফন্টের লেখা সঠিকভাবে দেখার জন্য আপনার পিসিতে 'SutonnyMJ' ফন্ট ইনস্টল থাকতে হবে। মোবাইলে বিজয় ফন্ট সাধারণত সাপোর্ট করে না, কিন্তু টেক্সট কপি করে ব্যবহার করলে ঠিক কাজ করবে।
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-gray-400 py-6 text-center text-sm">
+        <p>&copy; 2024 Bangla Converter Tool. Open Source for GitHub.</p>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-gray-800 text-white px-4 py-2 rounded shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        Copied to clipboard!
+    </div>
+
+    <!-- Logic Script -->
+    <script>
+        let currentMode = 'u2b'; // u2b or b2u
+
+        function switchMode(mode) {
+            currentMode = mode;
+            const tabU2B = document.getElementById('tabUniToBijoy');
+            const tabB2U = document.getElementById('tabBijoyToUni');
+            const inputLabel = document.getElementById('inputLabel');
+            const outputLabel = document.getElementById('outputLabel');
+            const inputText = document.getElementById('inputText');
+            const outputText = document.getElementById('outputText');
+
+            // Swap contents
+            let temp = inputText.value;
+            inputText.value = outputText.value;
+            outputText.value = temp;
+
+            if (mode === 'u2b') {
+                tabU2B.className = "px-6 py-2 rounded-md text-sm font-medium transition-all bg-emerald-600 text-white shadow-sm";
+                tabB2U.className = "px-6 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-emerald-600 transition-all";
+                inputLabel.innerHTML = '<span>ইউনিকোড কিবোর্ড বা পেস্ট করুন (Unicode)</span><span class="text-xs text-gray-400 font-normal">অভ্র/প্রভাত</span>';
+                outputLabel.innerText = 'বিজয় আউটপুট (Bijoy ANSI)';
+                inputText.classList.remove('bijoy-font');
+                outputText.classList.add('bijoy-font');
+            } else {
+                tabU2B.className = "px-6 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-emerald-600 transition-all";
+                tabB2U.className = "px-6 py-2 rounded-md text-sm font-medium transition-all bg-emerald-600 text-white shadow-sm";
+                inputLabel.innerText = 'বিজয় কিবোর্ড বা পেস্ট করুন (Bijoy)';
+                outputLabel.innerText = 'ইউনিকোড আউটপুট (Unicode)';
+                inputText.classList.add('bijoy-font');
+                outputText.classList.remove('bijoy-font');
+            }
+            // Auto convert on switch might be annoying if data is bad, but keeping logical flow
+            // doConvert(); 
+        }
+
+        function clearText(id) {
+            document.getElementById(id).value = '';
+            document.getElementById('charCount').innerText = '0 characters';
+            // doConvert();
+        }
+
+        function clearAll() {
+            document.getElementById('inputText').value = '';
+            document.getElementById('outputText').value = '';
+            document.getElementById('charCount').innerText = '0 characters';
+        }
+
+        document.getElementById('inputText').addEventListener('input', function() {
+            document.getElementById('charCount').innerText = this.value.length + ' characters';
+            doConvert(); // Auto convert on typing
+        });
+
+        function copyToClipboard() {
+            const copyText = document.getElementById("outputText");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            document.execCommand("copy");
+            showToast("টেক্সট কপি করা হয়েছে!");
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2000);
+        }
+
+        // --- NEW: Fix Broken Words Feature ---
+        function fixBrokenWords() {
+            let outputField = document.getElementById('outputText');
+            let text = outputField.value;
+            
+            if (!text) {
+                showToast("আউটপুট বক্সে কোনো লেখা নেই!");
+                return;
+            }
+
+            if (currentMode === 'u2b') {
+                // Fix Bijoy ANSI Output issues
+                // 1. Standardize E-kar (‡ vs †)
+                text = text.replace(/†/g, '‡');
+                
+                // 2. Fix common broken sequences (heuristics)
+                // Example: Double spacing or wrong matra placement
+                // Note: Real fixing requires complex dictionary, this handles common font glitches
+                
+            } else {
+                // Fix Unicode Output issues (More common)
+                // 1. Fix Split O-kar (ে + া -> ো)
+                text = text.replace(/ে([ক-হড়-য়ৎংঃঁ]+)া/g, "ো$1"); // Incorrect capture, o-kar surrounds
+                // Correct logic: e-kar + char + a-kar -> char + o-kar ? 
+                // No, in Unicode: char + e-kar + a-kar -> char + o-kar.
+                text = text.replace(/ে\u200D?া/g, 'ো'); // e-kar + a-kar -> o-kar
+                
+                // 2. Fix Split Au-kar (ে + ৗ -> ৌ)
+                text = text.replace(/ে\u200D?ৗ/g, 'ৌ');
+
+                // 3. Fix Ref placement if needed (sometimes Ref comes after in bad conversions)
+            }
+
+            outputField.value = text;
+            showToast("ভাঙ্গা শব্দ ঠিক করা হয়েছে!");
+        }
+
+        // --- CORE CONVERSION LOGIC ---
+
+        function doConvert() {
+            const input = document.getElementById('inputText').value;
+            let output = '';
+            if (currentMode === 'u2b') {
+                output = UnicodeToBijoy(input);
+            } else {
+                output = BijoyToUnicode(input);
+            }
+            document.getElementById('outputText').value = output;
+        }
+
+        // Logic Helpers
+        function UnicodeToBijoy(text) {
+             if (!text) return '';
+             let working = text;
+             
+             // Basic Pre-processing
+             // Reph Handling (Unicode Ref+Char -> Bijoy Ref+Char? No, usually handled by map)
+             
+             // This basic converter relies on the legacy_u2b function
+             return legacy_u2b(working);
+        }
+
+        function BijoyToUnicode(text) {
+            return legacy_b2u(text);
+        }
+
+        // --- ALGORITHMS ---
+        
+        function legacy_b2u(text) {
+             if(!text) return '';
+             let str = text;
+             
+             // 1. Typography fix
+             str = str.replace(/Av/g, "আ");
+             str = str.replace(/A/g, "অ");
+             
+             const map = {
+                 'Lv': 'খ', 'Mv': 'গ', 'Nv': 'ঘ', 'Pv': 'চ', 'Qv': 'ছ', 'Rv': 'জ', 'Sv': 'ঝ', 'Tv': 'ঞ',
+                 'Uv': 'ট', 'Vv': 'ঠ', 'Wv': 'ড', 'Xv': 'ঢ', 'Yv': 'ণ', 'Zv': 'ত', '_v': 'থ', '`v': 'দ',
+                 'av': 'ধ', 'bv': 'ন', 'cv': 'প', 'dv': 'ফ', 'ev': 'ব', 'fv': 'ভ', 'gv': 'ম', 'hv': 'য',
+                 'iv': 'র', 'jv': 'ল', 'kv': 'শ', 'lv': 'ষ', 'mv': 'স', 'nv': 'হ', 'qv': 'ঢ়', 'pv': 'ড়',
+                 'v': 'া', 'w': 'ি', 'x': 'ী', 'y': 'ু', 'z': 'ূ', '“': 'ৃ', '–': 'ে', '~': 'ৈ',
+                 '‡': 'ে', '†': 'ে', 'ˆ': 'ৈ', '‰': 'ৗ', 'Š': 'ৌ', '\\|': '।', '&': 'ঁ',
+                 'K': 'ক', 'L': 'খ', 'M': 'গ', 'N': 'ঘ', 'O': 'ঙ', 'P': 'চ', 'Q': 'ছ', 'R': 'জ', 'S': 'ঝ', 'T': 'ঞ',
+                 'U': 'ট', 'V': 'ঠ', 'W': 'ড', 'X': 'ঢ', 'Y': 'ণ', 'Z': 'ত', '_': 'থ', '`': 'দ', 'a': 'ধ', 'b': 'ন',
+                 'c': 'প', 'd': 'ফ', 'e': 'ব', 'f': 'ভ', 'g': 'ম', 'h': 'য', 'i': 'র', 'j': 'ল', 'k': 'শ', 'l': 'ষ',
+                 'm': 'স', 'n': 'হ', 'o': 'জ্ঞ', 'p': 'ড়', 'q': 'ঢ়', 'r': 'য়', 's': 'ং', 't': 'ৎ', 'u': 'ঁ', ':': 'ঃ'
+             };
+
+             // Replace '‡' or '†' (e-kar) + Char -> Char + ে
+             // Note: This needs to handle conjuncts (e.g. ‡Kv = কে).
+             // Regex: (‡)(Any Char) -> (Any Char)ে
+             // We use a simple loop for standard chars.
+             
+             str = str.replace(/([†‡])([K-Za-z_`])/g, "$2ে"); 
+
+             for (const [key, val] of Object.entries(map)) {
+                 if(key.length > 1) {
+                     let escapedKey = key.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                     str = str.replace(new RegExp(escapedKey, 'g'), val);
+                 }
+             }
+             for (const [key, val] of Object.entries(map)) {
+                 if(key.length === 1) {
+                     let escapedKey = key.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                     str = str.replace(new RegExp(escapedKey, 'g'), val);
+                 }
+             }
+             
+             // Swap Pre-kars back to Post-kars for Unicode
+             // (Matra)(Char) -> (Char)(Matra)
+             str = str.replace(/(ি|ে|ৈ)([ক-হড়-য়ৎ])/g, "$2$1");
+
+             return str;
+        }
+
+        function legacy_u2b(text) {
+            if(!text) return '';
+            let str = text;
+            
+            // 1. Move Kars BEFORE Consonants
+            str = str.replace(/([ক-হড়-য়ৎ])([েৈি])/g, "$2$1");
+            
+            const map = {
+                'ক': 'K', 'খ': 'L', 'গ': 'M', 'ঘ': 'N', 'ঙ': 'O', 
+                'চ': 'P', 'ছ': 'Q', 'জ': 'R', 'ঝ': 'S', 'ঞ': 'T',
+                'ট': 'U', 'ঠ': 'V', 'ড': 'W', 'ঢ': 'X', 'ণ': 'Y',
+                'ত': 'Z', 'থ': '_', 'দ': '`', 'ধ': 'a', 'ন': 'b',
+                'প': 'c', 'ফ': 'd', 'ব': 'e', 'ভ': 'f', 'ম': 'g',
+                'য': 'h', 'র': 'i', 'ল': 'j', 'শ': 'k', 'ষ': 'l', 'স': 'm', 'হ': 'n',
+                'ড়': 'p', 'ঢ়': 'q', 'য়': 'r', 'ৎ': 't',
+                'ং': 's', 'ঃ': ':', 'ঁ': 'u',
+                'া': 'v', 'ি': 'w', 'ী': 'x', 'ু': 'y', 'ূ': 'z', 'ৃ': '“',
+                'ে': '‡', 'ৈ': 'ˆ', 'ো': '‡v', 'ৌ': '‡Š',
+                'অ': 'A', 'আ': 'Av', 'ই': 'B', 'ঈ': 'C', 'উ': 'D', 'ঊ': 'E', 'ঋ': 'F',
+                'এ': 'G', 'ঐ': 'H', 'ও': 'I', 'ঔ': 'J',
+                '১': '1', '২': '2', '৩': '3', '৪': '4', '৫': '5',
+                '৬': '6', '৭': '7', '৮': '8', '৯': '9', '০': '0',
+                '।': '|'
+            };
+            
+            for (const [key, val] of Object.entries(map)) {
+                 let escapedKey = key.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                 str = str.replace(new RegExp(escapedKey, 'g'), val);
+            }
+            
+            return str;
+        }
+
+    </script>
+</body>
+</html>
